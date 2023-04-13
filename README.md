@@ -12,7 +12,33 @@ It takes in a user input, gets the top 50 Elasticsearch results, then runs a txt
 ## Setup/Installation
 You need Python installed, and a few dependencies, specifically [Streamlit](https://docs.streamlit.io/) (for running the app), Elasticsearch, and [txtai](https://github.com/neuml/txtai).
 
-This project assumes you have a local Elasticsearch cluster running on port 9200. You can run a local cluster and setup a movies index via docker-compose from the [simple-reranker project repo](https://github.com/ajwallacemusic/simple-reranker).
+This project assumes you have a local Elasticsearch cluster running on port 9200. You can run a local cluster and setup a movies index via docker-compose from the [simple-reranker project repo](https://github.com/ajwallacemusic/simple-reranker). The only addition you'll need to make to the Elasticsearch cluster is adding the `semantic_search_test` search template located in the root of the project.
+
+You can add it in Kibana with the following command:
+```
+PUT _scripts/semantic_search_test
+{
+  "script": {
+    "lang": "mustache",
+    "source": """
+{
+  "query": {
+    "multi_match": {
+      "fields": [
+        "title",
+        "description",
+        "genres.name"
+        ], 
+        "query": "{{query_string}}"
+      }
+    
+  }
+}
+    """
+  }
+}
+```
+ 
 
 ## Improvements
 The searching and reranking is not fast. That's because a similarity function is ran against each Elasticsearch result (essentially converting text to vector embeddings on the fly.) This works well for a proof of concept, but ideally, you would convert the data to vectors and add to a new Elasticsearch index, or vector database.
